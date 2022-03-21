@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.azuwinrazak.flickrassignment.android.R
 import com.azuwinrazak.flickrassignment.android.data.api.FlickrApiInterface
 import com.azuwinrazak.flickrassignment.android.data.modals.FlickrImageData
 import com.azuwinrazak.flickrassignment.android.data.repository.FlickrImageRepo
@@ -17,6 +18,7 @@ import javax.inject.Inject
 
 class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: FlickrImageRepo) : ViewModel() {
 
+    val query = mutableStateOf("")
     val errorMessage = MutableLiveData<String>()
     var imageList:List<FlickrImageData> by mutableStateOf(listOf())
     var job: Job? = null
@@ -25,9 +27,15 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
     }
     val loading = MutableLiveData<Boolean>()
 
-    fun fetchFlickrImages(queryStr: String) {
+    init {
+        fetchElectroluxImages(query.value)
+    }
+    fun fetchElectroluxImages(query: String) {
         job = CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
-            val response = flickrImageRepo.fetchFlickrImages(queryStr)
+            var tag = query
+            if(tag.isEmpty())
+                tag = "Electrolux"
+            val response = flickrImageRepo.fetchFlickrImages(tag)
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
                     imageList = (response.body()?.photos!!.photo as List<FlickrImageData>?)!!
@@ -37,7 +45,6 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
                 }
             }
         }
-
     }
 
     private fun onError(message: String) {
@@ -49,6 +56,16 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
         super.onCleared()
         job?.cancel()
     }
+
+    fun onQueryChanged(query: String){
+        this.query.value = query
+    }
+
+    fun clearList(){
+        imageList = listOf()
+    }
+
+
 
 
 
