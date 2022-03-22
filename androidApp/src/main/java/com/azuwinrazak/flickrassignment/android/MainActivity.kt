@@ -36,10 +36,6 @@ import com.azuwinrazak.flickrassignment.android.data.repository.FlickrImageRepo
 import com.azuwinrazak.flickrassignment.android.data.ui.theme.RecyclerviewFlickrTheme
 import com.azuwinrazak.flickrassignment.android.viewmodels.FlickrImageViewModel
 
-//fun greet(): String {
-//    return Greeting().greeting()
-//}
-
 class MainActivity  : ComponentActivity() {
     lateinit var viewModel: FlickrImageViewModel
 
@@ -49,7 +45,7 @@ class MainActivity  : ComponentActivity() {
         val flickrApi = FlickrApiInterface.getInstance()
         val repo = FlickrImageRepo(flickrApi)
         viewModel = ViewModelProvider(this, FlickrApiFactory(repo)).get(FlickrImageViewModel::class.java)
-
+        viewModel.fetchElectroluxImages("Electrolux")
         setContent {
             MainScreen(viewModel)
         }

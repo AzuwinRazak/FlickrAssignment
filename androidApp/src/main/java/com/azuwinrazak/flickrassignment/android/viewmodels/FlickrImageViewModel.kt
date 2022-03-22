@@ -27,18 +27,12 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
     }
     val loading = MutableLiveData<Boolean>()
 
-    init {
-        fetchElectroluxImages(query.value)
-    }
     fun fetchElectroluxImages(query: String) {
         job = CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
-            var tag = query
-            if(tag.isEmpty())
-                tag = "Electrolux"
-            val response = flickrImageRepo.fetchFlickrImages(tag)
+            val response = flickrImageRepo.fetchFlickrImages(query)
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
-                    imageList = (response.body()?.photos!!.photo as List<FlickrImageData>?)!!
+                   imageList = response.body()?.photos!!.photo!! as List<FlickrImageData>
                     loading.value = false
                 } else {
                     onError("Error : ${response.message()} ")
@@ -62,7 +56,7 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
     }
 
     fun clearList(){
-        imageList = listOf()
+        imageList = emptyList()
     }
 
 
