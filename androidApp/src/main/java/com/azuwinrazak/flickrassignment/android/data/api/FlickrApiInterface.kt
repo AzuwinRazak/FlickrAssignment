@@ -1,15 +1,13 @@
 package com.azuwinrazak.flickrassignment.android.data.api
 
 import com.azuwinrazak.flickrassignment.android.data.modals.FlickrImageResponseData
-import com.google.gson.GsonBuilder
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-
-public interface FlickrApiInterface {
+ interface FlickrApiInterface {
 
     @GET(ApiConstants.END_POINT)
     suspend fun fetchElectroluxImages(
