@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,17 +26,22 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
     val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         onError("Exception handled: ${throwable.localizedMessage}")
     }
-    val loading = MutableLiveData<Boolean>()
+    val state = MutableLiveData<String>()
 
     fun fetchElectroluxImages(query: String) {
+        state.value = "Loading"
+        var tag = query
+        if(query.isEmpty())
+            tag = "Electrolux"
         job = CoroutineScope(Dispatchers.IO + exceptionHandler).launch {
-            val response = flickrImageRepo.fetchFlickrImages(query)
+            val response = flickrImageRepo.fetchFlickrImages(tag)
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
                    imageList = response.body()?.photos!!.photo!! as List<FlickrImageData>
-                    loading.value = false
+                    state.value = "Success"
                 } else {
                     onError("Error : ${response.message()} ")
+                    state.value = "Failed"
                 }
             }
         }
@@ -43,7 +49,7 @@ class FlickrImageViewModel @Inject constructor(private val flickrImageRepo: Flic
 
     private fun onError(message: String) {
         errorMessage.value = message
-        loading.value = false
+        state.value = "Failed"
     }
 
     override fun onCleared() {

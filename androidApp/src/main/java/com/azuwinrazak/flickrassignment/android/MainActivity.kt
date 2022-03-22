@@ -1,6 +1,8 @@
 package com.azuwinrazak.flickrassignment.android
 
+import android.content.res.Resources
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -13,10 +15,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -29,6 +33,7 @@ import com.azuwinrazak.flickrassignment.android.data.modals.FlickrImageData
 import com.azuwinrazak.flickrassignment.android.data.repository.FlickrImageRepo
 import com.azuwinrazak.flickrassignment.android.data.ui.theme.RecyclerviewFlickrTheme
 import com.azuwinrazak.flickrassignment.android.viewmodels.FlickrImageViewModel
+import com.bumptech.glide.load.engine.Resource
 
 class MainActivity  : ComponentActivity() {
     lateinit var viewModel: FlickrImageViewModel
@@ -39,7 +44,7 @@ class MainActivity  : ComponentActivity() {
         val flickrApi = FlickrApiInterface.getInstance()
         val repo = FlickrImageRepo(flickrApi)
         viewModel = ViewModelProvider(this, FlickrApiFactory(repo)).get(FlickrImageViewModel::class.java)
-        viewModel.fetchElectroluxImages("Electrolux")
+        viewModel.fetchElectroluxImages(resources.getString(R.string.electrolux))
         setContent {
             MainScreen(viewModel)
         }
@@ -54,7 +59,7 @@ fun MainScreen(viewModel: FlickrImageViewModel){
     RecyclerviewFlickrTheme {
         Surface(color = MaterialTheme.colors.background) {
             val keyboardController = LocalSoftwareKeyboardController.current
-
+            var selectedIndex by remember { mutableStateOf(-1) }
             Column {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -86,6 +91,7 @@ fun MainScreen(viewModel: FlickrImageViewModel){
                             keyboardActions = KeyboardActions(
                             onSearch = {
                                 viewModel.clearList()
+                                selectedIndex = -1
                                 viewModel.fetchElectroluxImages(query)
                                 keyboardController?.hide()
                                 viewModel.onQueryChanged("")
@@ -94,7 +100,6 @@ fun MainScreen(viewModel: FlickrImageViewModel){
                     }
                 }
 
-            var selectedIndex by remember { mutableStateOf(-1) }
             //to load images into list
             LazyColumn {
                 itemsIndexed(items = flickrImageList) { index, item ->
@@ -102,7 +107,30 @@ fun MainScreen(viewModel: FlickrImageViewModel){
                         selectedIndex = i
                     }
                 }
-            } } } }
+            }
+            val r = viewModel.state.value
+                when (r) {
+                    "Loading" -> CustomizeCircularProgressIndicator()
+                    "Success" -> Unit
+                    else -> Log.d("EROR", "Failure")
+                }
+
+            } } }
+}
+
+@Composable
+fun CustomizeCircularProgressIndicator() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        CircularProgressIndicator(
+            progress = 0.8f,
+            color = MaterialTheme.colors.primary,
+            strokeWidth = 2.dp
+        )
+    }
+
 }
 
 @Composable
