@@ -1,8 +1,12 @@
 package com.azuwinrazak.flickrassignment.android
 
-import android.content.res.Resources
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -18,22 +22,29 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import coil.ImageLoader
 import coil.compose.rememberImagePainter
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import coil.size.Scale
 import com.azuwinrazak.flickrassignment.android.data.api.FlickrApiInterface
 import com.azuwinrazak.flickrassignment.android.data.di.FlickrApiFactory
 import com.azuwinrazak.flickrassignment.android.data.modals.FlickrImageData
 import com.azuwinrazak.flickrassignment.android.data.repository.FlickrImageRepo
-import com.azuwinrazak.flickrassignment.android.data.ui.theme.RecyclerviewFlickrTheme
+import com.azuwinrazak.flickrassignment.android.data.ui.ui.RecyclerviewFlickrTheme
+import com.azuwinrazak.flickrassignment.android.utils.*
 import com.azuwinrazak.flickrassignment.android.viewmodels.FlickrImageViewModel
-import com.bumptech.glide.load.engine.Resource
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class MainActivity  : ComponentActivity() {
     lateinit var viewModel: FlickrImageViewModel
@@ -49,6 +60,7 @@ class MainActivity  : ComponentActivity() {
             MainScreen(viewModel)
         }
     }
+
 }
 
 @ExperimentalComposeUiApi
@@ -133,11 +145,19 @@ fun CustomizeCircularProgressIndicator() {
 
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun ImageItem(image: FlickrImageData, index: Int, selectedIndex: Int, onClick: (Int) -> Unit) {
+    var backgroundColor : Color
+        if (index == selectedIndex) {
+            backgroundColor = MaterialTheme.colors.primary
 
-    val backgroundColor =
-        if (index == selectedIndex) MaterialTheme.colors.primary else MaterialTheme.colors.background
+            CallSnackBar(image.url_m)
+        }
+
+        else {
+            backgroundColor = MaterialTheme.colors.background
+        }
     Card(
         modifier = Modifier
             .padding(8.dp, 4.dp)
@@ -155,11 +175,9 @@ fun ImageItem(image: FlickrImageData, index: Int, selectedIndex: Int, onClick: (
                 Image(
                     painter = rememberImagePainter(
                         data = image.url_m,
-
                         builder = {
                             scale(Scale.FILL)
                             placeholder(R.drawable.placeholder)
-
                         }
                     ),
                     contentDescription = image.title,
@@ -171,4 +189,56 @@ fun ImageItem(image: FlickrImageData, index: Int, selectedIndex: Int, onClick: (
             }
         }
     }
+
+@Composable
+fun CallSnackBar(imageURL: String?) {
+    val context = LocalContext.current
+    Box(
+        contentAlignment = Alignment.BottomCenter,
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        // Snackbar with action item
+        Snackbar(
+            modifier = Modifier
+                .padding(4.dp),
+            action = {
+                TextButton(onClick = {
+                    //Save image to local
+                    scopeForSaving.launch {
+                    val bitmapUrlImage = imageURL?.let { urlToBitmap(it, context) }
+                    SaveMediaToStorage(bitmapUrlImage, context){
+                        scopeForMain.launch{
+                            ShowToast(context, "Saved to Gallery")
+                            //Toast.makeText(context , "Saved to Gallery" , Toast.LENGTH_SHORT).show()
+                        }
+                    } }
+                }) {
+                    Text(text = "Download")
+                }
+
+            }
+        ) {
+            Text(text = "Download Image?")
+        }
+    }
+}
+
+ suspend fun urlToBitmap(urlImage: String, context: Context) : Bitmap{
+        val loader = ImageLoader(context)
+        val request = ImageRequest.Builder(context)
+            .data(urlImage)
+            .allowHardware(false) // Disable hardware bitmaps.
+            .build()
+
+        val result = (loader.execute(request) as SuccessResult).drawable
+        return (result as BitmapDrawable).bitmap
+
+}
+
+
+
+
+
+
 

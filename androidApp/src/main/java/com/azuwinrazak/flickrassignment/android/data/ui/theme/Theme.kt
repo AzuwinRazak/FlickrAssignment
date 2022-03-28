@@ -1,4 +1,4 @@
-package com.azuwinrazak.flickrassignment.android.data.ui.theme
+package com.azuwinrazak.flickrassignment.android.data.ui.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
